@@ -16,12 +16,14 @@
 # and change the version below.                                    #
 # I am not responsible for any loss of data                        #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# If enough people request it (or someone creates a PR) I'll add this functionality
+# If enough people request it (or someone creates a PR) I'll add the functionality to migrate versions
 version="1.19.3"
-# Leave blank to use the latest build
+# Leave blank to use the latest build (auto updates on every run)
 select_build=""
 
+#
 # Memory settings
+#
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 # Do not allocate all of your available memory on a shared host! #
 # Minecraft (and Java) needs to have more memory than the Xmx    #
@@ -29,17 +31,18 @@ select_build=""
 # lower than your available memory if you're running just the    #
 # minecraft server.                                              #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-mem="6000M"
-# If you're using more memory than 12GB uncomment the line below
-# over_12G=true
 
+mem="2000M"
+
+#
 # Options for the server
+# 
 mc_launchoptions="-nogui"
 
 # You shouldn't need to change anything below this line
 # -----------------------------------------------------
 
-if [ "$over_12G" = true ]; then
+if [[ "${mem%M}" -gt 12000 ]]; then
   G1NewSize=40
   G1MaxNewSize=50
   G1HeapRegionSize=16M
