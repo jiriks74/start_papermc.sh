@@ -1,5 +1,5 @@
 # start_papermc.sh
-A better script for running Paper Minecraft server with features such as automatic build updates and automatic downlading
+A better script for running Paper Minecraft server with features such as automatic build updates, automatic downlading, interactive eula accepting, interactive updating, etc.
 
 ## Basic setup
 > **Note**
