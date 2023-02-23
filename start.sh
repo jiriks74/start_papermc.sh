@@ -9,6 +9,14 @@
 ############
 # Settings #
 ############
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+# This script is not made for migrating versions.                  #
+# If you're migrating versions, delete your old server's .jar file #
+# and change the version below.                                    #
+# I am not responsible for any loss of data                        #
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+# If enough people request it (or someone creates a PR) I'll add this functionality
 version="1.19.3"
 # Leave blank to use the latest build
 select_build=""
