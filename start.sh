@@ -22,26 +22,41 @@ version="1.19.3"
 select_build=""
 
 # Memory settings
-initMem="2000M" # Minimum memory used
-maxMem="6000M" # Maximum memory allowed to be used
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+# Do not allocate all of your available memory on a shared host! #
+# Minecraft (and Java) needs to have more memory than the Xmx    #
+# parameter (maxMem below). You should set it at least 1500M     #
+# lower than your available memory if you're running just the    #
+# minecraft server.                                              #
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
+mem="6000M"
+# If you're using more memory than 12GB uncomment the line below
+# over_12G=true
 
 # Options for the server
 mc_launchoptions="-nogui"
 
-# G1GC settings - leave the defaults if you're unsure
-g1HeapMem="32M" # Memory used by G1
-g1NewSize="20" # In %
-g1Reserve"20" # In %
-umaxGCpause="50" # In millis
-
-# Aditional options for the java runtime
-java_launchoptions=""
-
-# Change the defaults if you use older version of minecraft or just want to use something else
-java_launchoptions="-Xms$initMem -Xmx$maxMem -XX:G1HeapRegionSize=$g1HeapMem -XX:+UseG1GC -XX:G1NewSizePercent=$g1NewSize -XX:G1ReservePercent=$g1Reserve -XX:MaxGCPauseMillis=$maxGCpause  $java_launchoptions"
-
 # You shouldn't need to change anything below this line
 # -----------------------------------------------------
+
+if [ "$over_12G" = true ]; then
+  G1NewSize=40
+  G1MaxNewSize=50
+  G1HeapRegionSize=16M
+  G1Reserve=15
+  InitiatingHeapOccupancy=20
+else
+  G1NewSize=30
+  G1MaxNewSize=40
+  G1HeapRegionSize=8M
+  G1Reserve=20
+  InitiatingHeapOccupancy=15
+fi
+
+# Aikar's flags are used by default
+# See https://docs.papermc.io/paper/aikars-flags
+java_launchoptions="-Xms$mem -Xmx$mem -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=$G1NewSize -XX:G1MaxNewSizePercent=$G1MaxNewSize -XX:G1HeapRegionSize=$G1HeapRegionSize -XX:G1ReservePercent=$G1Reserve -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=$InitiatingHeapOccupancy -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
+
 
 # Api url
 url="https://api.papermc.io/v2/projects/paper/versions/$version/builds"
