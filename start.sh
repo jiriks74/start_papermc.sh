@@ -18,7 +18,7 @@
 # I am not responsible for any loss of data                        #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 # If enough people request it (or someone creates a PR) I'll add the functionality to migrate versions
-version="1.19.3"
+version="1.12.2"
 # Leave blank to use the latest build (auto updates on every run)
 select_build=""
 
@@ -33,7 +33,6 @@ select_build=""
 # minecraft server.                                              #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 mem="2000M"
-
 
 
 # ------------------------------------------------
@@ -61,9 +60,12 @@ fi
 # See https://docs.papermc.io/paper/aikars-flags
 java_launchoptions="-Xms$mem -Xmx$mem -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=$G1NewSize -XX:G1MaxNewSizePercent=$G1MaxNewSize -XX:G1HeapRegionSize=$G1HeapRegionSize -XX:G1ReservePercent=$G1Reserve -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=$InitiatingHeapOccupancy -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true"
 
-
 # Api url
 url="https://api.papermc.io/v2/projects/paper/versions/$version/builds"
+
+##########
+# Checks #
+##########
 
 # Check if selected version exists
 if curl -s "$url" | grep -q '{"error":"Version not found."}'; then
@@ -77,6 +79,107 @@ else
       exit 1
     fi
   fi
+fi
+
+# Check if curl is installed
+if ! command -v curl &> /dev/null
+then
+    echo "Error: Curl is not installed"
+    exit 1
+fi
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null
+then
+    echo "Error: jq is not installed"
+    exit 1
+fi
+
+# Check if awk is installed
+if ! command -v awk &> /dev/null
+then
+    echo "Error: awk is not installed"
+    exit 1
+fi
+
+# Check if java is installed
+if ! command -v java &> /dev/null
+then
+    echo "Error: Java is not installed"
+    java_version="0"
+fi
+
+#####################################################
+# Check if the correct version of Java is installed #
+#####################################################
+#
+
+# Extract the middle number of the Minecraft version
+minecraft_middle=$(echo "$version" | awk -F '.' '{print $2}')
+
+# If java is installed, get the version (the java_version won't be 0)
+if [[ $java_version != "0" ]]; then
+  # Get the current Java version and extract the build number
+  java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | awk -F '.' '{print $1}')
+fi
+
+# Ask if the user wants to continue anyway
+# If the user doesn't answer in 15 seconds, the script will exit
+function ask_continue {
+  if [[ $java_version_override != true ]]; then
+    answer=""
+    echo "You have 15 seconds to respond before the script exits."
+    read -t 15 -p "Do you want to continue anyway? [y/N]: " answer
+    if [[ $answer != "y" ]] || [[ $answer != "Y" ]]; then
+        echo "Exiting..."
+        exit 1
+    fi
+  fi
+}
+
+# Check if the correct version of java is installed
+# For version 1.8 to 1.11 use java 8
+# For version 1.12 to 1.16.4 use java 11
+# For version 1.16.5 use java 16
+# For version 1.17.1 to 1.18.1+ use java 17
+if (( 8 <= minecraft_middle && minecraft_middle <= 11 )); then
+  if ! [[ $java_version -eq 8 ]]; then
+    echo "Java 8 is required for Minecraft version $version. Please install Java 8."
+    if [[ $java_version == 0 ]]; then
+      exit 1
+    fi
+    ask_continue
+  fi
+elif (( 12 <= minecraft_middle && minecraft_middle <= 16 )); then
+  if ! [[ $java_version -eq 11 ]]; then
+    if [[ $java_version == 0 ]]; then
+      exit 1
+    fi
+    echo "Java 11 is required for Minecraft version $version. Please install Java 11."
+    ask_continue
+  fi
+elif (( minecraft_middle == 17 )); then
+  if ! [[ $java_version -eq 16 ]]; then
+    echo "Java 16 is required for Minecraft version $version. Please install Java 16."
+    if [[ $java_version == 0 ]]; then
+      exit 1
+    fi
+    ask_continue
+  fi
+elif (( 18 <= minecraft_middle )); then
+  if ! [[ $java_version -eq 17 ]]; then
+    echo "Java 17 is required for Minecraft version $version. Please install Java 17."
+    if [[ $java_version == 0 ]]; then
+      exit 1
+    fi
+    ask_continue
+  fi
+else
+  echo "Unsupported Minecraft version $version."
+  if [[ $java_version == 0 ]]; then
+    exit 1
+  fi
+  ask_continue
 fi
 
 # Check if some server already exists
