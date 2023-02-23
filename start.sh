@@ -31,7 +31,6 @@ select_build=""
 # lower than your available memory if you're running just the    #
 # minecraft server.                                              #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-
 mem="2000M"
 
 #
