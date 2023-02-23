@@ -7,7 +7,7 @@
 #                            and acknowledge the original script and author.                                #
 #############################################################################################################
 
-CURRENT_VERSION="1.0.0"
+CURRENT_VERSION="v1.0.0"
 
 # --------------------------------------------------
 # You shouldn't need to change anything in this file
@@ -356,13 +356,50 @@ function launch_server {
   java $java_launchoptions -jar "$(basename ./paper-*.jar)" $mc_launchoptions
 }
 
+# Download the update for the script
+function self_update {
+  # Download the latest version of the script
+  echo "Updating script..."
+  # Download the file into start_new.sh
+  curl -sLJ -w '%{http_code}\n' "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$LATEST_VERSION/start.sh" > start_new.sh
+  # Check if the download was successful by checking the last line of the file for 200
+  if [[ $(cat start_new.sh | tail -n 1) == 200 ]]; then
+    # Remove the last line of the file
+    sed -i '$d' start_new.sh
+    # Make the file executable
+    chmod +x start_new.sh
+    # Remove the old script
+    rm start.sh
+    echo "Removed old script"
+    # Rename the new script
+    mv start_new.sh start.sh
+    echo "Renamed new script"
+    echo "Script updated successfully."
+    echo
+    read -p "Do you want to restart the script? [y/N] " restart
+    if [ "$restart" == "y" ] || [ "$restart" == "Y" ]; then
+      echo "Restarting..."
+      # Execute the new script
+      exec "./start.sh" "$@"
+      exit 0
+    else
+      echo "Exiting..."
+      exit 0
+    fi
+  else
+    echo "Failed to update script."
+    rm start_new.sh
+    exit 5
+  fi
+}
+
 # Function to update the script
 function check_self_update {
   # Send a request to the GitHub API to retrieve the latest release
   response=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
 
   # Extract the latest version from the response
-  LATEST_VERSION=$($response | jq -r ".tag_name")
+  LATEST_VERSION=$(echo $response | jq -r ".tag_name")
 
   # Compare the current version with the latest version
   if [[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]]; then
@@ -370,7 +407,8 @@ function check_self_update {
     echo "Current version: $CURRENT_VERSION"
     echo "Latest version: $LATEST_VERSION"
     echo
-    echo "The script will continue in 15 seconds."
+    echo "The script will continue without updating in 15 seconds."
+    echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
     read -t 15 -p "Do you want to read the release notes? [y/N]"
     if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
       # Extract the release notes from the response
@@ -380,37 +418,16 @@ function check_self_update {
       echo "$RELEASE_NOTES" | less
 
       # Ask the user if they want to update
-      echo "The script will continue in 15 seconds."
+      echo "The script will continue without updating in 15 seconds."
       echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
       read -t 15 -p "Do you want to update? [y/N] " update
       if [ "$update" == "y" ] || [ "$update" == "Y" ]; then
-        download_self_update
+        self_update
       else
         echo "Skipping update."
         return
       fi
     fi
-  fi
-
-# Download the update for the script
-function self_update {
-  # Download the latest version of the script
-  echo "Updating script..."
-  if curl --fail -sLJO "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$LATEST_VERSION/start.sh"; then
-    chmod +x script.sh
-    echo "Script updated successfully."
-    echo
-    read -p "Do you want to restart the script? [y/N] " restart
-    if [ "$restart" == "y" ] || [ "$restart" == "Y" ]; then
-      echo "Restarting..."
-      exec "./script.sh" "$@"
-      exit 0
-    else
-      echo "Exiting..."
-      exit 0
-    fi
-  else
-    echo "Failed to update script."
   fi
 }
 
@@ -418,9 +435,12 @@ function self_update {
 function load_config {
   # Check if the config file exists
   if [ ! -f launch.cfg ]; then
+    sed -i '$d' launch.cfg
     echo "Config file does not exist."
     echo "Downloading the default config file..."
-    if curl --fail -sLJO "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$CURRENT_VERSION/launch.cfg"; then
+    curl -sLJO -w '%{http_code}' "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$LATEST_VERSION/start.sh" > start_new.sh
+    if [[ $(cat launch.cfg | tail -n 1) == 200 ]]; then
+
       echo
       read -p "Do you want to edit the config file? [y/N] " edit_config
       if [ "$edit_config" == "y" ] || [ "$edit_config" == "Y" ]; then
@@ -452,6 +472,9 @@ function main {
   # Check for script updates
   check_self_update
 
+  # Load config
+  load_config
+
   # Check dependencies
   check_dependencies
 
@@ -474,7 +497,8 @@ function main {
 # Check for updates on GitHub
 if [[ "$1" == "--redownload" ]]; then
   self_update
-else if [[ "$1" == "--help" ]]; then
+fi
+if [[ "$1" == "--help" ]]; then
   echo "Usage: ./script.sh [OPTION]"
   echo "Starts the Minecraft server."
   echo
@@ -487,6 +511,7 @@ else if [[ "$1" == "--help" ]]; then
   echo
   echo "For more information, see:"
   echo "https://github.com/$GITHUB_USER/$GITHUB_REPO"
+  exit 0
 else
   # Run the main function
   main
