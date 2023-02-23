@@ -18,9 +18,6 @@ CURRENT_VERSION="v1.0.2"
 REPO_OWNER="jiriks74"
 REPO_NAME="start_papermc.sh"
 
-# API URL
-api_url=""
-
 # Check for dependencies
 function check_dependencies {
   # Check if curl is installed
@@ -473,7 +470,8 @@ function load_config {
 
   # Load config
   source launch.cfg
-  api_url="https://api.papermc.io/v2/projects/paper/versions/$select_version/builds/"
+  # API URL
+  api_url="https://api.papermc.io/v2/projects/paper/versions/$select_version/builds"
 }
 
 # Main function
