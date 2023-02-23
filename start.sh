@@ -4,6 +4,7 @@
 #                                              by jiriks74                                                  #
 #                             https://github.com/jiriks74/start_papermc.sh                                  #
 #  This script is under GPLv3, if you want to distribute changes you have to do so under the same license   #
+#                            and acknowledge the original script and author.                                #
 #############################################################################################################
 
 ############
@@ -38,8 +39,9 @@ mem="2000M"
 # 
 mc_launchoptions="-nogui"
 
-# You shouldn't need to change anything below this line
-# -----------------------------------------------------
+# ------------------------------------------------
+# You shouldn't need to change anything below this
+# ------------------------------------------------
 
 if [[ "${mem%M}" -gt 12000 ]]; then
   G1NewSize=40
