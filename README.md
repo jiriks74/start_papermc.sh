@@ -3,8 +3,9 @@ A better script for running Paper Minecraft server with features such as automat
 
 > **Warning**
 >
-> - This script is not made for migrating versions. If you're migrating versions, delete your old server's `.jar` file and change ther version in the script's settings
-> If enough people request it (or someone creates a PR) I'll add this functionality
+> - This script is not made for migrating versions. If you're migrating versions, delete your old server's `.jar` file and change the version in the script's settings
+> - I am not responsible for any lost data
+> - If enough people request it (or someone creates a PR) I'll add this functionality
 
 ## Basic setup
 > **Note**
