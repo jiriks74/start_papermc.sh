@@ -7,53 +7,16 @@
 #                            and acknowledge the original script and author.                                #
 #############################################################################################################
 
-############
-# Settings #
-############
+CURRENT_VERSION="1.0.0"
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# This script is not made for migrating versions.                  #
-# If you're migrating versions, delete your old server's .jar file #
-# and change the version below.                                    #
-# I am not responsible for any loss of data                        #
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# If enough people request it (or someone creates a PR) I'll add the functionality to migrate versions
-select_version="1.19.3"
-# Leave blank to use the latest build (auto updates on every run)
-select_build=""
-
+# --------------------------------------------------
+# You shouldn't need to change anything in this file
+# Settings are located in 'launch.cfg'
+# --------------------------------------------------
 #
-# Memory settings
-#
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# Do not allocate all of your available memory on a shared host! #
-# Minecraft (and Java) needs to have more memory than the Xmx    #
-# parameter (maxMem below). You should set it at least 1500M     #
-# lower than your available memory if you're running just the    #
-# minecraft server.                                              #
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-mem="6000M"
-
-#############
-# Overrides #
-#############
-
-# Shouldn't be needed, but if for whatever reason you want to override some things, use the below options
-
-java_version_override=false
-
-# Aikar's flags are used by defauls (https://docs.papermc.io/paper/aikars-flags)
-# And are set by memory usage so if you allocated more than 12GB or RAM they are set automatically
-override_java_flags=false
-java_launchoptions=""
-
-# Flags for the server itself
-mc_launchoptions="-nogui"
-
-
-# ------------------------------------------------
-# You shouldn't need to change anything below this
-# ------------------------------------------------
+# The url of the script (used for updating)
+REPO_OWNER="jiriks74"
+REPO_NAME="start_papermc.sh"
 
 # API URL
 api_url="https://api.papermc.io/v2/projects/paper/versions/$select_version/builds"
@@ -393,8 +356,102 @@ function launch_server {
   java $java_launchoptions -jar "$(basename ./paper-*.jar)" $mc_launchoptions
 }
 
+# Function to update the script
+function check_self_update {
+  # Send a request to the GitHub API to retrieve the latest release
+  response=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
+
+  # Extract the latest version from the response
+  LATEST_VERSION=$($response | jq -r ".tag_name")
+
+  # Compare the current version with the latest version
+  if [[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]]; then
+    echo "An update is available!"
+    echo "Current version: $CURRENT_VERSION"
+    echo "Latest version: $LATEST_VERSION"
+    echo
+    echo "The script will continue in 15 seconds."
+    read -t 15 -p "Do you want to read the release notes? [y/N]"
+    if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
+      # Extract the release notes from the response
+      RELEASE_NOTES=$(echo "$response" | jq -r ".body")
+
+      # Print the release notes
+      echo "$RELEASE_NOTES" | less
+
+      # Ask the user if they want to update
+      echo "The script will continue in 15 seconds."
+      echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
+      read -t 15 -p "Do you want to update? [y/N] " update
+      if [ "$update" == "y" ] || [ "$update" == "Y" ]; then
+        download_self_update
+      else
+        echo "Skipping update."
+        return
+      fi
+    fi
+  fi
+
+# Download the update for the script
+function self_update {
+  # Download the latest version of the script
+  echo "Updating script..."
+  if curl --fail -sLJO "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$LATEST_VERSION/start.sh"; then
+    chmod +x script.sh
+    echo "Script updated successfully."
+    echo
+    read -p "Do you want to restart the script? [y/N] " restart
+    if [ "$restart" == "y" ] || [ "$restart" == "Y" ]; then
+      echo "Restarting..."
+      exec "./script.sh" "$@"
+      exit 0
+    else
+      echo "Exiting..."
+      exit 0
+    fi
+  else
+    echo "Failed to update script."
+  fi
+}
+
+# Load config
+function load_config {
+  # Check if the config file exists
+  if [ ! -f launch.cfg ]; then
+    echo "Config file does not exist."
+    echo "Downloading the default config file..."
+    if curl --fail -sLJO "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$CURRENT_VERSION/launch.cfg"; then
+      echo
+      read -p "Do you want to edit the config file? [y/N] " edit_config
+      if [ "$edit_config" == "y" ] || [ "$edit_config" == "Y" ]; then
+        if [ -z "$EDITOR" ]; then
+          echo "EDITOR is not set."
+          echo "Open 'launch.cfg' manually."
+          echo "Exiting..."
+          exit 1
+        else
+          echo "Opening the config file in $EDITOR..."
+          $EDITOR launch.cfg
+        fi
+      fi
+    else
+      echo "Failed to download the default config file."
+      echo "Go to the GitHub repository for more information:"
+      echo "https://github.com/$REPO_OWNER/$REPO_NAME"
+      echo "Exiting..."
+      exit 1
+    fi
+  fi
+
+  # Load config
+  source launch.cfg
+}
+
 # Main function
 function main {
+  # Check for script updates
+  check_self_update
+
   # Check dependencies
   check_dependencies
 
@@ -414,5 +471,23 @@ function main {
   launch_server
 }
 
-# Run the main function
-main
+# Check for updates on GitHub
+if [[ "$1" == "--redownload" ]]; then
+  self_update
+else if [[ "$1" == "--help" ]]; then
+  echo "Usage: ./script.sh [OPTION]"
+  echo "Starts the Minecraft server."
+  echo
+  echo "Options:"
+  echo "  --redownload  Redownloads the script from GitHub."
+  echo "  --help        Show this help message."
+  echo
+  echo "To change the settings of the script, edit the 'launch.cfg' file."
+  echo "If the file does not exist, it will be downloaded automatically when the script is run and you will be asked if you want to edit it."
+  echo
+  echo "For more information, see:"
+  echo "https://github.com/$GITHUB_USER/$GITHUB_REPO"
+else
+  # Run the main function
+  main
+fi
