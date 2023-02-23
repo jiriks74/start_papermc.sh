@@ -6,22 +6,37 @@ version="1.19.3"
 # Leave blank to use the latest build
 select_build=""
 
-# Memory settings
-initMem="1500M"
-maxMem="8000M" # Maximum memory the server can use
-
 # Options for the server
 mc_launchoptions="-nogui"
-# Options for the java runtime
-java_launchoptions="-Xms$initMem -Xmx$maxMem"
+
+# Memory settings
+initMem="2000M" # Minimum memory used
+maxMem="2000M" # Maximum memory allowed to be used
+
+# G1 settings
+g1HeapMem="32M" # Memory used by G1
+g1NewSize="20" # In %
+g1Reserve"20" # In %
+umaxGCpause="50" # In millis
+
+# Aditional options for the java runtime
+java_launchoptions=""
+
+# Change the defaults if you use older version of minecraft or just want to use something else
+java_launchoptions="-Xms$initMem -Xmx$maxMem -XX:G1HeapRegionSize=$g1HeapMem -XX:+UseG1GC -XX:G1NewSizePercent=$g1NewSize -XX:G1ReservePercent=$g1Reserve -XX:MaxGCPauseMillis=$maxGCpause  $java_launchoptions"
+
+# You shouldn't need to change anything below this line
+# -----------------------------------------------------
 
 # Api url
 url="https://api.papermc.io/v2/projects/paper/versions/$version/builds"
 
+# Check if selected version exists
 if curl -s "$url" | grep -q '{"error":"Version not found."}'; then
   echo "Error: Invalid version selected: $version"
   exit 1
 else
+  # Check if selected build exists
   if [ ! -z "$select_build" ]; then
     if curl -Is "https://api.papermc.io/v2/projects/paper/versions/$version/builds/$select_build/downloads/paper-$version-$select_build.jar" | grep "HTTP/2 404" >/dev/null; then
       echo "Error: Invalid build selected: $select_build"
