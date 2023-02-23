@@ -7,7 +7,7 @@
 #                            and acknowledge the original script and author.                                #
 #############################################################################################################
 
-CURRENT_VERSION="v1.0.1"
+CURRENT_VERSION="v1.0.2"
 
 # --------------------------------------------------
 # You shouldn't need to change anything in this file
@@ -19,7 +19,7 @@ REPO_OWNER="jiriks74"
 REPO_NAME="start_papermc.sh"
 
 # API URL
-api_url="https://api.papermc.io/v2/projects/paper/versions/$select_version/builds"
+api_url=""
 
 # Check for dependencies
 function check_dependencies {
@@ -473,6 +473,7 @@ function load_config {
 
   # Load config
   source launch.cfg
+  api_url="https://api.papermc.io/v2/projects/paper/versions/$select_version/builds/"
 }
 
 # Main function
