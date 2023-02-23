@@ -34,14 +34,14 @@ select_build=""
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
 mem="2000M"
 
-#
-# Options for the server
-# 
-mc_launchoptions="-nogui"
+
 
 # ------------------------------------------------
 # You shouldn't need to change anything below this
 # ------------------------------------------------
+
+# Options for the server
+mc_launchoptions="-nogui"
 
 if [[ "${mem%M}" -gt 12000 ]]; then
   G1NewSize=40
