@@ -1,8 +1,11 @@
 # start_papermc.sh
 
-A better script for running Paper Minecraft server with features such as
-version downlading, automatic build update, interactive eula accepting, protection
-against accidental version update, Aikar's flags out of the box, etc.
+The best way to quickly spin up a PaperMC server.
+
+Includes features such as version downlading,
+automatic build update, interactive eula accepting,
+protection against accidental version update,
+Aikar's flags out of the box, etc.
 
 ## Table of contents
 
