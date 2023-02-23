@@ -7,7 +7,7 @@
 #                            and acknowledge the original script and author.                                #
 #############################################################################################################
 
-CURRENT_VERSION="v1.0.0"
+CURRENT_VERSION="v1.0.1"
 
 # --------------------------------------------------
 # You shouldn't need to change anything in this file
@@ -398,34 +398,39 @@ function check_self_update {
   # Send a request to the GitHub API to retrieve the latest release
   response=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
 
-  # Extract the latest version from the response
-  LATEST_VERSION=$(echo $response | jq -r ".tag_name")
+  if [[ $response =~ "API rate limit exceeded" ]]; then
+    echo "API limit exceeded. Will not check for updates."
+  else
+    # Extract the latest version from the response
+    LATEST_VERSION=$(echo $response | jq -r ".tag_name")
 
-  # Compare the current version with the latest version
-  if [[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]]; then
-    echo "An update is available!"
-    echo "Current version: $CURRENT_VERSION"
-    echo "Latest version: $LATEST_VERSION"
-    echo
-    echo "The script will continue without updating in 15 seconds."
-    echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
-    read -t 15 -p "Do you want to read the release notes? [y/N]"
-    if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
-      # Extract the release notes from the response
-      RELEASE_NOTES=$(echo "$response" | jq -r ".body")
-
-      # Print the release notes
-      echo "$RELEASE_NOTES" | less
-
-      # Ask the user if they want to update
+    # Compare the current version with the latest version
+    if [[ "$CURRENT_VERSION" != "$LATEST_VERSION" ]]; then
+      echo "An update is available!"
+      echo "Current version: $CURRENT_VERSION"
+      echo "Latest version: $LATEST_VERSION"
+      echo
       echo "The script will continue without updating in 15 seconds."
       echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
-      read -t 15 -p "Do you want to update? [y/N] " update
-      if [ "$update" == "y" ] || [ "$update" == "Y" ]; then
-        self_update
-      else
-        echo "Skipping update."
-        return
+      read -t 15 -p "Do you want to read the release notes? [y/N]"
+      if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
+        # Extract the release notes from the response
+        RELEASE_NOTES=$(echo "$response" | jq -r ".body")
+
+        # Print the release notes
+        echo "$RELEASE_NOTES" | less
+
+        # Ask the user if they want to update
+        echo
+        echo "The script will continue without updating in 15 seconds."
+        echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
+        read -t 15 -p "Do you want to update? [y/N] " update
+        if [ "$update" == "y" ] || [ "$update" == "Y" ]; then
+          self_update
+        else
+          echo "Skipping update."
+          return
+        fi
       fi
     fi
   fi
@@ -435,11 +440,14 @@ function check_self_update {
 function load_config {
   # Check if the config file exists
   if [ ! -f launch.cfg ]; then
-    sed -i '$d' launch.cfg
     echo "Config file does not exist."
     echo "Downloading the default config file..."
-    curl -sLJO -w '%{http_code}' "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$LATEST_VERSION/start.sh" > start_new.sh
+    # Download the default config file for the current version
+    curl -sLJ -w '%{http_code}' "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$CURRENT_VERSION/launch.cfg" > launch.cfg
+    # Check if the download was successful by checking the last line of the file for 200
     if [[ $(cat launch.cfg | tail -n 1) == 200 ]]; then
+      # Remove the last line of the file
+      sed -i '$d' launch.cfg
 
       echo
       read -p "Do you want to edit the config file? [y/N] " edit_config
@@ -510,7 +518,7 @@ if [[ "$1" == "--help" ]]; then
   echo "If the file does not exist, it will be downloaded automatically when the script is run and you will be asked if you want to edit it."
   echo
   echo "For more information, see:"
-  echo "https://github.com/$GITHUB_USER/$GITHUB_REPO"
+  echo "https://github.com/$REPO_OWNER/$REPO_NAME"
   exit 0
 else
   # Run the main function
