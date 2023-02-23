@@ -1,19 +1,26 @@
 #!/bin/bash
-# Auto Update & Run PaperMC server script
+#############################################################################################################
+#                                Auto Update & Run PaperMC server script                                    #
+#                                              by jiriks74                                                  #
+#                             https://github.com/jiriks74/start_papermc.sh                                  #
+#  This script is under GPLv3, if you want to distribute changes you have to do so under the same license   #
+#############################################################################################################
 
-# Settings
+############
+# Settings #
+############
 version="1.19.3"
 # Leave blank to use the latest build
 select_build=""
 
+# Memory settings
+initMem="2000M" # Minimum memory used
+maxMem="6000M" # Maximum memory allowed to be used
+
 # Options for the server
 mc_launchoptions="-nogui"
 
-# Memory settings
-initMem="2000M" # Minimum memory used
-maxMem="2000M" # Maximum memory allowed to be used
-
-# G1 settings
+# G1GC settings - leave the defaults if you're unsure
 g1HeapMem="32M" # Memory used by G1
 g1NewSize="20" # In %
 g1Reserve"20" # In %
