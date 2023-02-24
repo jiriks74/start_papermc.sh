@@ -97,6 +97,7 @@ function check_java {
   # Check if the correct version of java is installed
   if (( 8 <= minecraft_middle && minecraft_middle <= 11 )); then
     if ! [[ $java_version -eq 8 ]]; then
+      echo "Java $java_version is installed."
       echo "Java 8 is required for Minecraft version $select_version. Please install Java 8."
       if [[ $java_version == 0 ]]; then
         exit 3
@@ -105,14 +106,16 @@ function check_java {
     fi
   elif (( 12 <= minecraft_middle && minecraft_middle <= 16 )); then
     if ! [[ $java_version -eq 11 ]]; then
+      echo "Java $java_version is installed."
+      echo "Java 11 is required for Minecraft version $select_version. Please install Java 11."
       if [[ $java_version == 0 ]]; then
         exit 3
       fi
-      echo "Java 11 is required for Minecraft version $select_version. Please install Java 11."
       ask_continue
     fi
   elif (( minecraft_middle == 17 )); then
     if ! [[ $java_version -eq 16 ]]; then
+      echo "Java $java_version is installed."
       echo "Java 16 is required for Minecraft version $select_version. Please install Java 16."
       if [[ $java_version == 0 ]]; then
         exit 3
@@ -121,6 +124,7 @@ function check_java {
     fi
   elif (( 18 <= minecraft_middle )); then
     if ! [[ $java_version -eq 17 ]]; then
+      echo "Java $java_version is installed."
       echo "Java 17 is required for Minecraft version $select_version. Please install Java 17."
       if [[ $java_version == 0 ]]; then
         exit 3
@@ -478,12 +482,16 @@ function load_config {
 function main {
   # Check dependencies
   check_dependencies
-
-  # Check for script updates
-  check_self_update
-
+  
   # Load config
   load_config
+  
+  if [[ $check_self_update == true ]]; then
+    # Check for script updates
+    check_self_update
+  else
+    echo "Skipping script update check."
+  fi
 
   # Check if the version and build are valid
   check_version_valid
