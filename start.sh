@@ -7,7 +7,7 @@
 #                            and acknowledge the original script and author.                                #
 #############################################################################################################
 
-CURRENT_VERSION="v1.0.2"
+CURRENT_VERSION="v1.0.3"
 
 # --------------------------------------------------
 # You shouldn't need to change anything in this file
@@ -480,18 +480,18 @@ function load_config {
 
 # Main function
 function main {
+  # Check dependencies
+  check_dependencies
+  
+  # Load config
+  load_config
+  
   if [[ $check_self_update == true ]]; then
     # Check for script updates
     check_self_update
   else
     echo "Skipping script update check."
   fi
-
-  # Load config
-  load_config
-
-  # Check dependencies
-  check_dependencies
 
   # Check if the version and build are valid
   check_version_valid
