@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # Detect the server type
 function get_existing_server {
   if ls paper-*.jar 1> /dev/null 2>&1; then

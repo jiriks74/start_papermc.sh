@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # Setup Java
 function setup_java {
   # Get the required Java version for the Minecraft version

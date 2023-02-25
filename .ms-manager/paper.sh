@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 # API URL
 api_url="https://api.papermc.io/v2/projects/paper/versions/$version/builds"
 
