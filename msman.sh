@@ -149,6 +149,7 @@ function ask_server_differs {
 # Accept EULA
 function accept_eula {
   if test "$(cat eula.txt 2>/dev/null)" != "eula=true"; then
+    first_run=true
     echo "'eula.txt' does not exist or EULA is not accepted"
     echo "You have to accept the Minecraft EULA to run the server"
     echo "By entering 'y' you are indicating your agreement to Minecraft's EULA (https://aka.ms/MinecraftEULA)."
@@ -343,6 +344,21 @@ function load_script {
   fi
 }
 
+# First run
+first_run() {
+  if [[ $first_run == true ]]; then
+    answer=""
+    echo "Since eula wasn't accepted, this is probably the first run of the server"
+    echo "If you want to install plugins (or mods), answer 'n' and you can do so."
+    echo "If you don't answer, the server will start in 15 secondd."
+    read -t 15 -p "Do you want to start the server now? [Y/n] " answer
+    if [ "$answer" == "n" ] || [ "$answer" == "N" ]; then
+      echo "Exiting..."
+      exit 0
+    fi
+  fi
+}
+
 # Main function
 function main {
   # Check dependencies
@@ -376,6 +392,9 @@ function main {
 
   # Accept EULA
   accept_eula
+
+  # Check if this is the first run
+  first_run
 
   # Launch the server
   launch_server
