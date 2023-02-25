@@ -202,6 +202,38 @@ function launch_server {
   java $java_launchoptions -jar "$(basename ./paper-*.jar)" $mc_launchoptions
 }
 
+# Helper scripts update
+function helper_scripts_update {
+  # Download matching version of helper scripts
+  echo "Updating helper scripts..."
+  # Download the file into ms-manager.tar.gz
+  curl -LJ -w '%{http_code}\n' "https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$CURRENT_SCRIPT_VERSION/ms-man-helper.tar.gz" > ms-man-helper.tar.gz
+  # Check if the download was successful by checking the last line of the file for 200
+  if [[ $(cat ma-man.tar.gz | tail -n 1) == 200 ]]; then
+    # Remove the last line of the file
+    sed -i '$d' ms-man-helper.tar.gz
+    # Extract the files from ms-man-helper.tar.gz
+    tar -xzf ms-man-helper.tar.gz
+    # Remove the old script
+    echo "Removing old helper scripts..."
+    rm -rf .ms-manager
+    echo "Removed old script"
+    echo "Moving new helper scripts into place..."
+    mv ms-manager .ms-manager
+    echo "Removing temporary files..."
+    rm ms-manager-helper.tar.gz
+    echo "Helper scripts updated successfully."
+    echo
+    echo
+  else
+    echo "Failed to update helper scripts."
+    rm -rf ms-manager
+    rm ms-manager-helper.tar.gz
+    exit 5
+  fi
+
+}
+
 # Download the update for the script
 function self_update {
   # Download the latest version of the script
@@ -222,16 +254,6 @@ function self_update {
     echo "Renamed new script"
     echo "Script updated successfully."
     echo
-    read -p "Do you want to restart the script? [y/N] " restart
-    if [ "$restart" == "y" ] || [ "$restart" == "Y" ]; then
-      echo "Restarting..."
-      # Execute the new script
-      exec "./start.sh" "$@"
-      exit 0
-    else
-      echo "Exiting..."
-      exit 0
-    fi
   else
     echo "Failed to update script."
     rm start_new.sh
@@ -239,48 +261,68 @@ function self_update {
   fi
 }
 
-# Function to update the script
-function check_self_update {
-  # Send a request to the GitHub API to retrieve the latest release
-  response=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
+# Check helper scripts update
+function check_helper_scripts {
+  if [[ $CURRENT_SCRIPT_VERSION != $EXTRA_SCRIPTS_VERSION ]]; then
+    echo "Helper script verion mismatch!"
+    echo "Main script version: $CURRENT_SCRIPT_VERSION"
+    echo "Helper script version: $EXTRA_SCRIPTS_VERSION"
+    echo
+    echo "The script will now download the same version of the helper scripts as the main script."
+    helper_scripts_update
+  fi
+}
+
+# Get latest script version
+function get_latest_script_release {
+response=$(curl -sL "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases/latest")
 
   if [[ $response =~ "API rate limit exceeded" ]]; then
     echo "API limit exceeded. Will not check for updates."
+    LATEST_SCRIPT_VERSION=$CURRENT_SCRIPT_VERSION
   else
     # Extract the latest version from the response
-    LATEST_VERSION=$(echo $response | jq -r ".tag_name")
+    LATEST_SCRIPT_VERSION=$(echo $response | jq -r ".tag_name")
+  fi
+}
 
-    # Compare the current version with the latest version
-    if [[ "$CURRENT_SCRIPT_VERSION" != "$LATEST_VERSION" ]]; then
-      echo "An update is available!"
-      echo "Current version: $CURRENT_SCRIPT_VERSION"
-      echo "Latest version: $LATEST_VERSION"
+# Function to update the script
+function check_self_update {
+  # Get the latest version of the script
+  get_latest_script_release
+
+  # Compare the current version with the latest version
+  if [[ "$CURRENT_SCRIPT_VERSION" != "$LATEST_VERSION" ]]; then
+    echo "An update is available!"
+    echo "Current version: $CURRENT_SCRIPT_VERSION"
+    echo "Latest version: $LATEST_VERSION"
+    echo
+    echo "The script will continue without updating in 15 seconds."
+    echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
+    read -t 15 -p "Do you want to update and read the release notes? [y/N]"
+    if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
+      # Extract the release notes from the response
+      RELEASE_NOTES=$(echo "$response" | jq -r ".body")
+
+      # Print the release notes
+      echo "$RELEASE_NOTES" | less
+
+      # Ask the user if they want to update
       echo
       echo "The script will continue without updating in 15 seconds."
       echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
-      read -t 15 -p "Do you want to update and read the release notes? [y/N]"
-      if [ "$REPLY" == "y" ] || [ "$REPLY" == "Y" ]; then
-        # Extract the release notes from the response
-        RELEASE_NOTES=$(echo "$response" | jq -r ".body")
-
-        # Print the release notes
-        echo "$RELEASE_NOTES" | less
-
-        # Ask the user if they want to update
-        echo
-        echo "The script will continue without updating in 15 seconds."
-        echo "If you decide to update it is your responsibility to check the release notes for any breaking changes."
-        read -t 15 -p "Do you want to update? [y/N] " update
-        if [ "$update" == "y" ] || [ "$update" == "Y" ]; then
-          self_update
-        else
-          echo "Skipping update."
-          return
-        fi
+      read -t 15 -p "Do you want to update? [y/N] " update
+      if [ "$update" == "y" ] || [ "$update" == "Y" ]; then
+        self_update
+        CURRENT_VERSION=$LATEST_VERSION
+        check_helper_scripts
+      else
+        echo "Skipping update."
+        return
       fi
-      echo
-      echo
     fi
+    echo
+    echo
   fi
 }
 
@@ -383,16 +425,19 @@ function main {
   # Load config
   load_config
 
-  # Load the rest of the script
-  # Get the current server file, version and build
-  load_script
-  
   if [[ $check_for_script_updates == true ]]; then
     # Check for script updates
     check_self_update
   else
     echo "Skipping script update check."
   fi
+
+  # Check helper scripts version mismatch
+  check_helper_scripts
+
+  # Load the rest of the script
+  # Get the current server file, version and build
+  load_script
 
   # Gets the installed server info
   get_existing_server
