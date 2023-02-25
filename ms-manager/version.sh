@@ -1,0 +1,3 @@
+#!/bin/bash
+
+CURRENT_SCRIPTS_VERSION="v1.0.3"
