@@ -231,7 +231,6 @@ function helper_scripts_update {
     rm ms-manager-helper.tar.gz
     exit 5
   fi
-
 }
 
 # Download the update for the script
@@ -263,12 +262,19 @@ function self_update {
 
 # Check helper scripts update
 function check_helper_scripts {
-  if [[ $CURRENT_SCRIPT_VERSION != $EXTRA_SCRIPTS_VERSION ]]; then
-    echo "Helper script verion mismatch!"
-    echo "Main script version: $CURRENT_SCRIPT_VERSION"
-    echo "Helper script version: $EXTRA_SCRIPTS_VERSION"
-    echo
-    echo "The script will now download the same version of the helper scripts as the main script."
+  if [[ -d .ms-manager ]]; then
+    source "./ms-manager/version.sh"
+    if [[ $CURRENT_SCRIPT_VERSION != $EXTRA_SCRIPTS_VERSION ]]; then
+      echo "Helper script verion mismatch!"
+      echo "Main script version: $CURRENT_SCRIPT_VERSION"
+      echo "Helper script version: $EXTRA_SCRIPTS_VERSION"
+      echo
+      echo "The script will now download the same version of the helper scripts as the main script."
+      helper_scripts_update
+    fi
+  else
+    echo "Helper scripts not found."
+    echo "The script will now download the helper scripts."
     helper_scripts_update
   fi
 }
@@ -382,7 +388,8 @@ function delete_old_server {
 
 # Load the rest of the script
 function load_script {
-  # TODO: Check if the script files exist
+  # DONE: Check if the script files exist
+  #   - Checked in check_helper_scripts
   source "./.ms-manager/detect_server.sh"
   source "./.ms-manager/java.sh"
 
