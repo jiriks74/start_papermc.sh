@@ -48,6 +48,21 @@ function check_dependencies {
       echo "Error: screen is not installed"
       exit 1
   fi
+  
+  # Check if tar is installed
+  if ! command -v tar &> /dev/null
+  then
+      echo "Error: tar is not installed"
+      exit 1
+  fi
+
+  # Check if gzip is installed
+  # TODO: Check if this is needed and/or works
+  # if ! command -v gzip &> /dev/null
+  # then
+  #     echo "Error: gzip is not installed"
+  #     exit 1
+  # fi
 }
 
 # Ask if the user wants to continue anyway
