@@ -325,12 +325,12 @@ function delete_old_server {
 # Load the rest of the script
 function load_script {
   # TODO: Check if the script files exist
-  source "./ms-manager/detect_server.sh"
-  source "./ms-manager/java.sh"
+  source "./.ms-manager/detect_server.sh"
+  source "./.ms-manager/java.sh"
 
   # Load the correct script
   if [[ $server_type == "paper" ]]; then
-    source ".//ms-manager/paper.sh"
+    source "./.ms-manager/paper.sh"
   # elif [[ $server_type == "vanilla" ]]; then
   #   source "$cwd/ms-manager/vanilla.sh"
   # elif [[ $server_type == "forge" ]]; then
