@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 #############################################################################################################
 #                                Auto Update & Run PaperMC server script                                    #
 #                                              by jiriks74                                                  #
@@ -385,7 +386,7 @@ function main {
   check_version_valid
 
   # Check if the correct java version is installed
-  check_java
+  setup_java
 
   # Check if the server is up to date and if not, update it
   check_and_update
