@@ -1,3 +1,5 @@
+# **Development moved to [msman.sh](https://github.com/jiriks74/msman.sh)**
+
 # start_papermc.sh
 
 The best way to quickly spin up a PaperMC server.
